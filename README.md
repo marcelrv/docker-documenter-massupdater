@@ -67,11 +67,12 @@ python3 docker_snapshot.py [OPTIONS] [PATTERNS...]
 | `-h, --help` | Show help message and exit. |
 | `-o, --output PATH` | Write all containers to a single script at PATH. Mutually exclusive with `--per-container-dir`. |
 | `--per-container-dir DIR` | Directory for per-container scripts (default: `recreate_containers.d`). Individual files are named `<container_name>.sh`. |
-| `--include-cmd` | Include the container's entrypoint command (Cmd) in the recreated run line. Omitted by default. |
+| `--include-cmd` | Include the container's command parameters in the recreated run line. Extracts only the parameters/arguments, not the entrypoint itself. Omitted by default. |
 | `--add-label KEY=VALUE` | Add a label to containers if that label key (after `{{name}}` substitution) is not already present. Supports `{{name}}` in both key and value. Repeatable. |
 | `--add-env KEY=VALUE` | Add an environment variable to containers if that variable is not already present. Supports `{{name}}` in value. Repeatable. |
 | `--add-restart POLICY` | Apply a restart policy to containers that have none set. Examples: `unless-stopped`, `on-failure:3`. |
 | `--add-network NETWORK` | Apply a network to containers using the default/bridge network. Only affects default networks; custom networks are preserved. Examples: `home`, `docker_default`. |
+| `--no-overwrite` | Skip existing files without prompting; only create new ones. Useful for incremental updates. |
 
 ## Examples
 
@@ -158,9 +159,17 @@ Outputs all container run commands into a single executable script.
 python3 docker_snapshot.py --include-cmd
 ```
 
-Adds the container's original `Cmd` to the reconstructed run line (default: omitted).
+Adds the container's command parameters to the reconstructed run line (entrypoint is excluded; only parameters like `-c /src/config.yaml` are included). Default: omitted.
 
-### 9. Process Only openhab with Full Configuration
+### 9. Skip Existing Files (Incremental Updates)
+
+```bash
+python3 docker_snapshot.py --no-overwrite
+```
+
+Only generates scripts for containers that don't yet have a corresponding `.sh` file in the output directory. Useful for incremental updates without prompting.
+
+### 10. Process Only openhab with Full Configuration
 
 ```bash
 python3 docker_snapshot.py openhab \
@@ -170,6 +179,8 @@ python3 docker_snapshot.py openhab \
   --add-restart unless-stopped \
   --add-network home
 ```
+
+### 11. Combine Multiple Options for Mass-Update
 
 ## Output Format
 
