@@ -415,11 +415,23 @@ def format_command(
     args.append(shlex.quote(image))
 
     if include_cmd:
+        entrypoint = cfg.get("Entrypoint") or []
         cmd = cfg.get("Cmd") or []
+        
+        if isinstance(entrypoint, str):
+            entrypoint = [entrypoint]
         if isinstance(cmd, str):
             cmd = [cmd]
-        for part in cmd:
-            args.append(shlex.quote(part))
+        
+        # If Entrypoint is set, Cmd contains only parameters; otherwise, Cmd's first element is the command
+        if entrypoint:
+            # Entrypoint is the command, all of Cmd is parameters
+            for part in cmd:
+                args.append(shlex.quote(part))
+        else:
+            # Cmd's first element is the command, rest are parameters
+            for part in cmd[1:]:
+                args.append(shlex.quote(part))
 
     formatted = " \\\n".join(["docker run"] + [f"  {arg}" for arg in args])
     return formatted
