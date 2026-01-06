@@ -172,6 +172,11 @@ def parse_args() -> argparse.Namespace:
             "Example: 'home'."
         ),
     )
+    parser.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Skip existing files without prompting; only create new ones.",
+    )
     if len(sys.argv) == 1:
         parser.print_help()
 
@@ -464,7 +469,7 @@ def write_output_combined(path: str, blocks: List[str]) -> int:
     return 1
 
 
-def write_output_per_container(directory: str, blocks: List[Tuple[str, str]]) -> int:
+def write_output_per_container(directory: str, blocks: List[Tuple[str, str]], no_overwrite: bool = False) -> int:
     os.makedirs(directory, exist_ok=True)
     written = 0
     overwrite_all = False
@@ -472,6 +477,8 @@ def write_output_per_container(directory: str, blocks: List[Tuple[str, str]]) ->
     for name, block in blocks:
         filename = f"{sanitize_filename(name)}.sh"
         full_path = os.path.join(directory, filename)
+        if no_overwrite and os.path.exists(full_path):
+            continue
         should_write, overwrite_all = should_overwrite(full_path, overwrite_all)
         if not should_write:
             continue
@@ -537,7 +544,7 @@ def main() -> int:
         if written:
             print(f"Wrote {len(blocks)} container definitions to {args.output}")
     else:
-        written = write_output_per_container(args.per_container_dir, blocks)
+        written = write_output_per_container(args.per_container_dir, blocks, args.no_overwrite)
         print(
             f"Wrote {written}/{len(blocks)} container scripts to {args.per_container_dir}"
         )
